@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener } from '@angular/core';
-
+import io from "socket.io-client";
 
 
 @Component({
@@ -13,11 +13,14 @@ export class AppComponent implements OnInit, AfterViewInit {
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
     if (event.keyCode === 65 && this.paddle1Y > 20) {
-      this.paddle1Y -= 20;
+      // this.paddle1Y -= 20;
+      this.socket.emit('paddle1Up',this.paddle1Y)
+
       console.log(this.paddle2Y, this.table.nativeElement.height);
     }
     else if (event.keyCode === 90 && this.paddle1Y < this.table.nativeElement.height - 220) {
-      this.paddle1Y += 20;
+      // this.paddle1Y += 20;
+      this.socket.emit('paddle1Down',this.paddle1Y)
       console.log(this.paddle2Y, this.table.nativeElement.height);
     }
   }
@@ -35,6 +38,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   paddle2Y;
 
   private context;
+  private socket;
 
   // establish connnection to socket server
   ngOnInit() {
@@ -46,8 +50,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     window.addEventListener('onresize', this.drawScreen);
 
-  
 
+    this.socket = io("http://localhost:3000")
   }
 
   ngAfterViewInit() {
@@ -59,9 +63,19 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.paddle2X = this.table.nativeElement.width - 40;
     this.paddle2Y = this.table.nativeElement.height / 2 - 100;
 
-  
+    this.socket.emit('start', {paddle1Y:this.paddle1Y,paddle2Y:this.paddle2Y})
 
+    // this.socket.on('updatePositons',(updatedPositons)=>{
+    //   this.paddle1X = 
+    //   this.paddle1Y =
+    //   this.paddle2X =
+    //   this.paddle2Y = 
+    // })
 
+    this.socket.on('updatePaddlePositions', (updatedPositions)=>{
+      this.paddle1Y = updatedPositions.paddle1Y;
+      this.paddle2Y = updatedPositions.paddle2Y;
+    })
   }
 
   drawScreen = () => {
@@ -170,11 +184,13 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   movePaddle2 = (e) => {
     if (this.paddle2Y > 0 && e.wheelDelta > 0) {
-      this.paddle2Y -= 20;
+      // this.paddle2Y -= 20;
+      this.socket.emit('paddle2Up')
     } else if (this.paddle2Y < this.table.nativeElement.height - 220) {
-      this.paddle2Y += 20;
+      // this.paddle2Y += 20;
+      this.socket.emit('paddle2Down')
     }
-   
+
   }
 
 }
