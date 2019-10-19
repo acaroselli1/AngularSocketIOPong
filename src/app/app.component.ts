@@ -36,16 +36,19 @@ export class AppComponent implements OnInit, AfterViewInit {
   paddle1Y;
   paddle2X;
   paddle2Y;
+  player1Ready;
+  player2Ready;
 
   private context;
   private socket;
 
   // establish connnection to socket server
   ngOnInit() {
-    window.addEventListener('load', this.animateBall);
-
-    window.addEventListener('load', this.drawBall);
-
+   window.addEventListener('load', this.animateBall);
+   
+   window.addEventListener('load', this.drawBall);
+  
+  
     window.addEventListener('mousewheel', this.movePaddle2);
 
     window.addEventListener('onresize', this.drawScreen);
@@ -65,13 +68,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     this.socket.emit('start', {paddle1Y:this.paddle1Y,paddle2Y:this.paddle2Y})
 
-    // this.socket.on('updatePositons',(updatedPositons)=>{
-    //   this.paddle1X = 
-    //   this.paddle1Y =
-    //   this.paddle2X =
-    //   this.paddle2Y = 
-    // })
-
     this.socket.on('updatePaddlePositions', (updatedPositions)=>{
       this.paddle1Y = updatedPositions.paddle1Y;
       this.paddle2Y = updatedPositions.paddle2Y;
@@ -79,9 +75,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   drawScreen = () => {
-    this.table.nativeElement.height = window.innerHeight
-    this.table.nativeElement.width = window.innerWidth;
-    this.context.clearRect(0, 0, this.table.nativeElement.width, this.table.nativeElement.height);
+    this.table.nativeElement.height = 500
+    this.table.nativeElement.width = 500;
+    this.context.clearRect(0, 0, 500, 500);
     this.drawScore1();
     this.drawScore2();
     this.drawBall();
@@ -191,6 +187,25 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.socket.emit('paddle2Down')
     }
 
+  }
+
+  handlePlayer1Click(){
+    this.player1Ready = true;
+    if(this.player2Ready){
+      this.beginGame();
+    }
+  }
+
+  handlePlayer2Click(){
+    this.player2Ready = true;
+    if(this.player1Ready){
+      this.beginGame();
+    }
+  }
+
+  beginGame(){
+    this.animateBall();
+    this.drawBall();
   }
 
 }
