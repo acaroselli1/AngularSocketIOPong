@@ -46,26 +46,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     window.addEventListener('onresize', this.drawScreen);
 
-    window.addEventListener('onkeydown', (e: KeyboardEvent) => {
+  
 
-      if (e.keyCode === 38) {
-        // speedX++;
-        // speedY++;
-      }
-      else if (e.keyCode === 40) {
-        // speedX--;
-        // speedY--;n
-      }
-      else if (e.keyCode === 65 && this.paddle1Y > 20) {
-        this.paddle1Y -= 20;
-        console.log(this.paddle2Y, this.table.nativeElement.height);
-      }
-      else if (e.keyCode === 90 && this.paddle1Y < this.table.nativeElement.height - 220) {
-        this.paddle1Y += 20;
-        console.log(this.paddle2Y, this.table.nativeElement.height);
-      }
-
-    })
   }
 
   ngAfterViewInit() {
@@ -76,6 +58,9 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.paddle1Y = this.table.nativeElement.height / 2 - 100;
     this.paddle2X = this.table.nativeElement.width - 40;
     this.paddle2Y = this.table.nativeElement.height / 2 - 100;
+
+  
+
 
   }
 
@@ -189,10 +174,8 @@ export class AppComponent implements OnInit, AfterViewInit {
     } else if (this.paddle2Y < this.table.nativeElement.height - 220) {
       this.paddle2Y += 20;
     }
+   
   }
-
-
-
 
 }
 
