@@ -13,15 +13,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
     if (event.keyCode === 65 && this.paddle1Y > 20) {
-      // this.paddle1Y -= 20;
-      this.socket.emit('paddle1Up',this.paddle1Y)
-
-      console.log(this.paddle2Y, this.table.nativeElement.height);
+      this.socket.emit('paddle1Up', this.paddle1Y)
     }
     else if (event.keyCode === 90 && this.paddle1Y < this.table.nativeElement.height - 220) {
-      // this.paddle1Y += 20;
-      this.socket.emit('paddle1Down',this.paddle1Y)
-      console.log(this.paddle2Y, this.table.nativeElement.height);
+      this.socket.emit('paddle1Down', this.paddle1Y)
     }
   }
 
@@ -31,28 +26,21 @@ export class AppComponent implements OnInit, AfterViewInit {
   player2Score = 0;
   speedX = 10;
   speedY = 2;
-  circleX;
-  circleY;
+  circleX=500;
+  circleY=500;
   paddle1Y;
   paddle2X;
   paddle2Y;
-  player1Ready;
-  player2Ready;
 
   private context;
   private socket;
 
   // establish connnection to socket server
   ngOnInit() {
-   window.addEventListener('load', this.animateBall);
-   
-   window.addEventListener('load', this.drawBall);
-  
-  
+
     window.addEventListener('mousewheel', this.movePaddle2);
 
     window.addEventListener('onresize', this.drawScreen);
-
 
     this.socket = io("http://localhost:3000")
   }
@@ -66,12 +54,25 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.paddle2X = this.table.nativeElement.width - 40;
     this.paddle2Y = this.table.nativeElement.height / 2 - 100;
 
-    this.socket.emit('start', {paddle1Y:this.paddle1Y,paddle2Y:this.paddle2Y})
+    this.socket.emit('start', { paddle1Y: this.paddle1Y, paddle2Y: this.paddle2Y })
 
-    this.socket.on('updatePaddlePositions', (updatedPositions)=>{
+    this.socket.on('updatePaddlePositions', (updatedPositions) => {
       this.paddle1Y = updatedPositions.paddle1Y;
       this.paddle2Y = updatedPositions.paddle2Y;
     })
+
+    this.socket.on('updateBallPosition', (updatedBallPosition) => {
+      this.circleX = updatedBallPosition.circleX;
+      this.circleY = updatedBallPosition.circleY;
+    })
+
+    this.socket.on('updateBallSpeed', (updatedBallSpeed) => {
+      this.speedX = updatedBallSpeed.speedX;
+      this.speedY = updatedBallSpeed.speedY;
+    })
+
+    this.socket.on('startGame', () => this.beginGame())
+   
   }
 
   drawScreen = () => {
@@ -87,7 +88,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   drawBall = () => {
-
     this.context.beginPath();
     this.context.arc(this.circleX, this.circleY, 20, 0, Math.PI * 2);
     this.context.strokeStyle = "white"
@@ -135,11 +135,9 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.context.strokeText(this.player2Score, this.table.nativeElement.width * .75, this.table.nativeElement.height / 4);
     }
   }
-
-
   animateBall = () => {
 
-    if (this.circleX < 21) {
+    if (this.circleX < 20) {
       this.player2Score++;
       // document.getElementById("score").play();
       this.drawScreen();
@@ -147,7 +145,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.circleY = this.table.nativeElement.height / 2;
     }
 
-    if (this.circleX > this.table.nativeElement.width + 21) {
+    if (this.circleX > this.table.nativeElement.width + 20) {
       // document.getElementById("score").play();
       this.player1Score++;
       this.drawScreen();
@@ -155,17 +153,14 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.circleY = this.table.nativeElement.height / 2;
     }
 
-    if (this.circleY + this.speedY > this.table.nativeElement.height - 20 || this.circleY + this.speedY < 20) {
+    if (this.circleY + this.speedY > this.table.nativeElement.height - 20 || this.circleY + this.speedY < 20){
       // document.getElementById("hit-wall").play();
-      this.speedY = -this.speedY;
+      this.socket.emit('hitWall');
     }
-    if (this.circleY > this.paddle2Y - 20 && this.circleY < this.paddle2Y + 221 && ((this.table.nativeElement.width - this.circleX <= 71) && (this.table.nativeElement.width - this.circleX >= 60))) {
-      // document.getElementById("hit-sound").play();
-      this.speedX = -this.speedX;
-    }
-    if (this.circleY > this.paddle1Y - 20 && this.circleY < this.paddle1Y + 221 && (this.circleX <= 71 && this.circleX >= 60)) {
-      // document.getElementById("hit-sound").play();
-      this.speedX = -this.speedX;
+
+    if ((((this.circleX + this.speedX > this.table.nativeElement.width - 60) && ((this.circleY >= this.paddle2Y) && (this.circleY <= this.paddle2Y + 200))) || ((this.circleX + this.speedX < 60) && ((this.circleY >= this.paddle1Y) && (this.circleY <= this.paddle1Y + 200)))) && !(this.circleX < 60 || (this.circleX > this.table.nativeElement.width - 60 ))) {
+      // document.getElementById("hit-wall").play();
+      this.socket.emit('hitPaddle')
     }
 
     this.circleX += this.speedX;
@@ -176,34 +171,24 @@ export class AppComponent implements OnInit, AfterViewInit {
     var test = requestAnimationFrame(this.animateBall)
   }
 
-
-
   movePaddle2 = (e) => {
     if (this.paddle2Y > 0 && e.wheelDelta > 0) {
-      // this.paddle2Y -= 20;
       this.socket.emit('paddle2Up')
     } else if (this.paddle2Y < this.table.nativeElement.height - 220) {
-      // this.paddle2Y += 20;
       this.socket.emit('paddle2Down')
     }
-
   }
 
-  handlePlayer1Click(){
-    this.player1Ready = true;
-    if(this.player2Ready){
-      this.beginGame();
-    }
+  handlePlayer1Click() {
+    this.socket.emit('player1ready', true);
   }
 
-  handlePlayer2Click(){
-    this.player2Ready = true;
-    if(this.player1Ready){
-      this.beginGame();
-    }
+  handlePlayer2Click() {
+    this.socket.emit('player2ready', true);
   }
 
-  beginGame(){
+
+  beginGame() {
     this.animateBall();
     this.drawBall();
   }
